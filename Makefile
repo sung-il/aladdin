@@ -14,7 +14,7 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 # later want to change the CONSOLE_VERSION then you must run
 # the 'clean' target first before re-running the 'docker' target.
 CONSOLE_VERSION ?= local
-CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
+CONSOLE_LOCAL_DIR ?= ../aladdin-ui
 
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of

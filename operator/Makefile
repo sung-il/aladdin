@@ -12,17 +12,15 @@ OPERATOR_WATCH_NAMESPACE ?= kiali-operator
 OPERATOR_INSTALL_KIALI ?= false
 
 # When installing Kiali, here are some configuration settings for it.
-AUTH_STRATEGY ?= openshift
+AUTH_STRATEGY ?= anonymous
 CREDENTIALS_USERNAME ?= admin
 CREDENTIALS_PASSPHRASE ?= admin
-KIALI_IMAGE_NAME ?= soda2019/aladdin
+KIALI_IMAGE_NAME ?= kiali/kiali
 KIALI_IMAGE_PULL_POLICY ?= IfNotPresent
 KIALI_IMAGE_VERSION ?= dev
 NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
 SERVICE_TYPE ?= NodePort
-KIALI_IMAGE_NAME ?= soda2019/aladdin
-KIALI_IMAGE_PULL_POLICY ?= IfNotPresent
 
 # Find the client executable (either istiooc or oc or kubectl)
 OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
@@ -83,6 +81,8 @@ operator-push:
 	done ; \
 	exit 0
 
+soda-create: operator-create kiali-create
+
 ## operator-create: Deploy the Kiali operator to the cluster using the install script.
 # By default, this target will not deploy Kiali - it will only deploy the operator.
 # You can tell it to also install Kiali by setting OPERATOR_INSTALL_KIALII=true.
@@ -140,12 +140,15 @@ endif
 # VERBOSE_MODE="${VERBOSE_MODE}" \
 # SERVICE_TYPE="${SERVICE_TYPE}" \
 # envsubst | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
-	@echo Deploy Kiali using the settings found in deploy/kiali/aladdin_cr.yaml
-	cat deploy/kiali/aladdin_cr.yaml | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
+	@echo Deploy Kiali using the settings found in deploy/kiali/aladdin_cr_dev.yaml
+	cat deploy/kiali/aladdin_cr_dev.yaml | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
 
-
-## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
+ifeq ($(AUTH_STRATEGY),login)
 kiali-delete: secret-delete
+else
+kiali-delete:
+endif
+## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
 	@echo Remove Kiali
 	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}"
 

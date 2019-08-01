@@ -9,7 +9,16 @@ spec:
 #  ---
   auth:
 # Options are "login", "anonymous", "openshift".
-    strategy: "login"
+    strategy: "anonymous"
+
+spec:
+  template:
+    spec:
+      tolerations:
+      - key: "kiali"
+        operator: "Equal"
+        value: "no"
+        effect: "NoSchedule"
 
 ##########
 #  ---
