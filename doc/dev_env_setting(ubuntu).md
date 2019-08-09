@@ -11,7 +11,7 @@
     sudo ufw allow from k8s-master
 
 
-# update
+# package list update
     sudo apt update
     sudo apt-get install -y \
         apt-transport-https \
