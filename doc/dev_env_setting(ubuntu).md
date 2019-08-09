@@ -252,7 +252,7 @@
     kubectl create -n kiali-operator -f deploy/kiali/aladdin_cr_dev.yaml
 
 
-# delete kiali (=make kiali-delete)
+# delete kiali
     kubectl create -n kiali-operator -f deploy/kiali/aladdin_cr_dev.yaml
     
     
