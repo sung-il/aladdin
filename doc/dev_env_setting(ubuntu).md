@@ -188,9 +188,12 @@
 # istio 등 모든 설치가 끝나면 taint 변경
     kubectl taint node {WORKER-NODE} kiali=no:NoSchedule
     kubectl taint nodes --all node-role.kubernetes.io/master-
+    
+# remove taint
+    kubectl taint nodes {WORKER-NODE} kiali:NoSchedule-
 
 
-# create kiali token (username:sung-il, password:ssuadmin123 / 원하는 유저명 및 비밀번호는 echo -n 'admin' | base64 이런식으로 암호화해서 변경해주면 됨)
+# create kiali token (username:sung-il, password:ssuadmin123 / 원하는 유저명 및 비밀번호는 echo -n 'admin' | base64 이런식으로 인코딩해서 변경해주면 됨)
     cat <<EOF | kubectl apply -f -
     apiVersion: v1
     kind: Secret
@@ -226,7 +229,7 @@
     curl -sL https://deb.nodesource.com/setup_10.x | bash -
     sudo apt-get install -y nodejs
     sudo apt-get install gcc g++ make
-    npm install yarn -g
+    npm install -g yarn
 
 
 # get packages
@@ -239,18 +242,79 @@
     yarn
     yarn build
     cd ../aladdin
-    make soda-build
+    make soda-build # (make build & make docker-build)
     cd operator
     make operator-create
     make kiali-create 
 
 
-# create kiali
+# create kiali (=make kiali-create)
     kubectl create -n kiali-operator -f deploy/kiali/aladdin_cr_dev.yaml
 
 
-# delete kiali
+# delete kiali (=make kiali-delete)
     kubectl create -n kiali-operator -f deploy/kiali/aladdin_cr_dev.yaml
+    
+    
+# node-exporter
+    cat >> node-exporter.yaml <<EOF
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+      labels:
+        app: node-exporter
+        name: node-exporter
+      name: node-exporter
+    spec:
+      clusterIP: None
+      ports:
+      - name: scrape
+        port: 9100
+        protocol: TCP
+      selector:
+        app: node-exporter
+      type: ClusterIP
+    ---
+    apiVersion: extensions/v1beta1
+    kind: DaemonSet
+    metadata:
+      name: node-exporter
+    spec:
+      template:
+        metadata:
+          labels:
+            app: node-exporter
+          name: node-exporter
+        spec:
+          tolerations:
+            - key: node-role.kubernetes.io/master
+              effect: NoSchedule
+          containers:
+          - image: prom/node-exporter
+            name: node-exporter
+            ports:
+            - containerPort: 9100
+              hostPort: 9100
+              name: scrape
+          hostNetwork: true
+          hostPID: true
+    EOF
+
+    kubectl create -f node-exporter.yaml
+
+
+# kube-state-metrics
+    go get k8s.io/kube-state-metrics
+    cd $GOPATH/src/k8s.io/kube-state-metrics
+    make container 
+    kubectl apply -f kubernetes
+
+
+# prometheus, grafana NodePort로 변경 (ClusterIP를 NodePort로 변경)
+    kubectl edit svc prometheus -n istio-system
+    kubectl edit svc grafana -n istio-system
 
 
 # alias
@@ -261,6 +325,12 @@
     alias kp='kubectl get pod -A'
     alias ks='kubectl get svc -A'
     EOF
+    
+    cat >> ~/.bashrc <<EOF
+    source ~/.bash_profile
+    EOF
+    
+    source ~/.bashrc
 
 
 # reset kubernetes cluster
