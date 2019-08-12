@@ -16,7 +16,6 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 CONSOLE_VERSION ?= local
 CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
-
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
 # "app: kiali" and "version: ${VERSION_LABEL}"
